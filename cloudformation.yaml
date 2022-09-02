@@ -2628,14 +2628,7 @@ Outputs:
           - SenzingVersionMap
           - !Ref SenzingVersion
           - SenzingApiTools
-
-  ImageVersionsPart2:
-    Description: "List of Docker images used in this stack, part 2."
-    Export:
-      Name: !Sub "${AWS::StackName}-image-versions-part-2"
-    Value: !Join
-      - ""
-      - - "StreamLoader:"
+        - ", StreamLoader:"
         - !FindInMap
           - SenzingVersionMap
           - !Ref SenzingVersion
