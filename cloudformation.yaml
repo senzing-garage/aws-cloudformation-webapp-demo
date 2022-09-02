@@ -180,7 +180,6 @@ Mappings:
       Redoer: public.ecr.aws/senzing/redoer:2.1.0
       SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.2.0
       StreamLoader: public.ecr.aws/senzing/stream-loader:2.1.0
-      StreamProducer: public.ecr.aws/senzing/stream-producer:1.7.3
       WebApp: public.ecr.aws/senzing/entity-search-web-app:2.7.1
       Xterm: public.ecr.aws/senzing/xterm:1.4.1
 
@@ -189,17 +188,10 @@ Mappings:
       ApiServer: Yes
       Redoer: Yes
       StreamLoader: Yes
-      StreamProducer: No
       WebApp: Yes
       Xterm: Yes
     Stack:
       Name: webappdemo
-    StreamProducer:
-      DataSource: TEST
-      EntityType: GENERIC
-      InputUrl: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set-3.0.0.jsonl
-      RecordMax: 0
-      RecordMin: 0
 
 # -----------------------------------------------------------------------------
 # Conditions
@@ -219,10 +211,6 @@ Conditions:
     - !FindInMap [Constants, Run, StreamLoader]
     - Yes
 
-  IfRunStreamProducer: !Equals
-    - !FindInMap [Constants, Run, StreamProducer]
-    - Yes
-
   IfRunWebApp: !Equals
     - !FindInMap [Constants, Run, WebApp]
     - Yes
@@ -240,10 +228,6 @@ Conditions:
   IfUsingRedoQueues: !Or
     - !Condition IfRunRedoer
     - !Condition IfRunRedoer
-
-  IfUsingQueues: !Or
-    - !Condition IfRunStreamLoader
-    - !Condition IfRunStreamProducer
 
   IfUsingWeb: !Or
     - !Condition IfRunApiServer
@@ -380,24 +364,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-iam-role-stream-loader"
     Type: AWS::IAM::Role
 
-  IamRoleStreamProducer:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action:
-              - sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-                - sqs.amazonaws.com
-        Version: "2012-10-17"
-      Description: !Sub "${AWS::StackName}-iam-role-stream-producer"
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-stream-producer"
-    Type: AWS::IAM::Role
-
   IamRoleWebApp:
     Properties:
       AssumeRolePolicyDocument:
@@ -517,7 +483,6 @@ Resources:
         - !Ref IamRoleLambda
         - !Ref IamRoleRedoer
         - !Ref IamRoleStreamLoader
-        - !Ref IamRoleStreamProducer
         - !Ref IamRoleWebApp
         - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
@@ -533,12 +498,10 @@ Resources:
             Resource:
               - !GetAtt IamRoleG2ConfigTool.Arn
               - !GetAtt IamRoleLambda.Arn
-              - !GetAtt IamRoleStreamProducer.Arn
         Version: "2012-10-17"
       Roles:
         - !Ref IamRoleG2ConfigTool
         - !Ref IamRoleLambda
-        - !Ref IamRoleStreamProducer
     Type: AWS::IAM::Policy
 
   IamPolicyRoute53:
@@ -558,7 +521,7 @@ Resources:
     Type: AWS::IAM::Policy
 
   IamPolicySqsConsumer:
-    Condition: IfUsingQueues
+    Condition: IfRunStreamLoader
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-consumer"
       PolicyDocument:
@@ -598,7 +561,7 @@ Resources:
     Type: AWS::IAM::Policy
 
   IamPolicySqsProducer:
-    Condition: IfUsingQueues
+    Condition: IfRunStreamLoader
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-producer"
       PolicyDocument:
@@ -614,7 +577,6 @@ Resources:
         Version: "2012-10-17"
       Roles:
         - !Ref IamRoleStreamLoader
-        - !Ref IamRoleStreamProducer
         - !Ref IamRoleApiServer
     Type: AWS::IAM::Policy
 
@@ -1082,7 +1044,7 @@ Resources:
   # AWS Console: https://console.aws.amazon.com/sqs/v2/home > Search on {stack}
 
   SqsInput:
-    Condition: IfUsingQueues
+    Condition: IfRunStreamLoader
     Properties:
       DelaySeconds: 0
       KmsMasterKeyId: alias/aws/sqs
@@ -1103,7 +1065,7 @@ Resources:
     Type: AWS::SQS::Queue
 
   SqsDeadLetter:
-    Condition: IfUsingQueues
+    Condition: IfRunStreamLoader
     Properties:
       DelaySeconds: 0
       KmsMasterKeyId: alias/aws/sqs
@@ -1118,7 +1080,7 @@ Resources:
     Type: AWS::SQS::Queue
 
   SqsOutput:
-    Condition: IfUsingQueues
+    Condition: IfRunStreamLoader
     Properties:
       DelaySeconds: 0
       KmsMasterKeyId: alias/aws/sqs
@@ -1837,36 +1799,6 @@ Resources:
       WebUsername: !Ref CognitoAdminEmail
     Type: Custom::LambdaRunnerCognitoCreateUser
 
-  LambdaRunnerG2ConfigTool:
-    Condition: IfRunStreamProducer
-    Properties:
-      ClusterId: !Ref EcsCluster
-      RunTaskParameters:
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
-        cluster: !Ref EcsCluster
-        count: 1
-        launchType: FARGATE
-        networkConfiguration:
-          awsvpcConfiguration:
-            assignPublicIp: DISABLED
-            securityGroups:
-              - !Ref Ec2SecurityGroupLambdaRunner
-            subnets:
-              - Fn::ImportValue:
-                  Fn::Sub: "${DatabaseStack}-subnet-private-1"
-              - Fn::ImportValue:
-                  Fn::Sub: "${DatabaseStack}-subnet-private-2"
-        platformVersion: 1.4.0
-        tags:
-          - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-g2configtool-run-task-parameters"
-        taskDefinition: !Ref EcsTaskDefinitionG2ConfigTool
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-g2configtool"
-    Type: Custom::LambdaRunnerG2ConfigTool
-
   LambdaRunnerGenerateCertificate:
     Condition: IfUsingWeb
     Properties:
@@ -1923,39 +1855,6 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-stack-name-as-lower"
     Type: Custom::LambdaRunnerStackNameAsLower
-
-  LambdaRunnerStreamProducer:
-    Condition: IfRunStreamProducer
-    DependsOn:
-      - LambdaRunnerG2ConfigTool
-      - SqsInput
-    Properties:
-      ClusterId: !Ref EcsCluster
-      RunTaskParameters:
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
-        cluster: !Ref EcsCluster
-        count: 1
-        launchType: FARGATE
-        networkConfiguration:
-          awsvpcConfiguration:
-            assignPublicIp: DISABLED
-            securityGroups:
-              - !Ref Ec2SecurityGroupLambdaRunner
-            subnets:
-              - Fn::ImportValue:
-                  Fn::Sub: "${DatabaseStack}-subnet-private-1"
-              - Fn::ImportValue:
-                  Fn::Sub: "${DatabaseStack}-subnet-private-2"
-        platformVersion: 1.4.0
-        tags:
-          - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-stream-producer-run-task-parameters"
-        taskDefinition: !Ref EcsTaskDefinitionStreamProducer
-      ServiceToken: !GetAtt LambdaFunctionRunTask.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-stream-producer"
-    Type: Custom::LambdaRunnerStreamProducer
 
   LambdaRunnerSubnets:
     Properties:
@@ -2461,9 +2360,9 @@ Resources:
             - Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
             - Name: SENZING_SQS_LOAD_QUEUE_URL
-              Value: !If [IfUsingQueues, !Ref SqsInput, ""]
+              Value: !If [IfRunStreamLoader, !Ref SqsInput, ""]
             - Name: SENZING_SQS_INFO_QUEUE_URL
-              Value: !If [IfUsingQueues, !Ref SqsOutput, ""]
+              Value: !If [IfRunStreamLoader, !Ref SqsOutput, ""]
           Essential: true
           Image: !FindInMap
             - SenzingVersionMap
@@ -2493,49 +2392,6 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ecs-task-definition-api-server"
       TaskRoleArn: !GetAtt IamRoleApiServer.Arn
-    Type: AWS::ECS::TaskDefinition
-
-  EcsTaskDefinitionG2ConfigTool:
-    Condition: IfRunStreamProducer
-    Properties:
-      ContainerDefinitions:
-        - Command:
-            - '/bin/bash'
-            - '-c'
-            - 'echo "${SENZING_G2CONFIG_GTC}" >> /tmp/G2Config.gtc; /opt/senzing/g2/python/G2ConfigTool.py -f /tmp/G2Config.gtc'
-          Environment:
-            - Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
-            - Name: SENZING_G2CONFIG_GTC
-              Value: |
-                addDataSource CUSTOMERS
-                addDataSource REFERENCE
-                addDataSource WATCHLIST
-                save
-          Essential: true
-          Image: !FindInMap
-            - SenzingVersionMap
-            - !Ref SenzingVersion
-            - SenzingApiTools
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: job
-          Name: g2configtool
-          Privileged: false
-          ReadonlyRootFilesystem: false
-      Cpu: "2048"
-      ExecutionRoleArn: !GetAtt IamRoleG2ConfigTool.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-g2configtool"
-      Memory: "12288"
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-g2configtool"
     Type: AWS::ECS::TaskDefinition
 
   EcsTaskDefinitionRedoerLoader:
@@ -2696,60 +2552,6 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ecs-task-definition-stream-loader"
       TaskRoleArn: !GetAtt IamRoleStreamLoader.Arn
-    Type: AWS::ECS::TaskDefinition
-
-  EcsTaskDefinitionStreamProducer:
-    Condition: IfRunStreamProducer
-    Properties:
-      ContainerDefinitions:
-        - Environment:
-            - Name: SENZING_DEFAULT_DATA_SOURCE
-              Value: !FindInMap [Constants, StreamProducer, DataSource]
-            - Name: SENZING_DEFAULT_ENTITY_TYPE
-              Value: !FindInMap [Constants, StreamProducer, EntityType]
-            - Name: SENZING_INPUT_URL
-              Value: !FindInMap [Constants, StreamProducer, InputUrl]
-            - Name: SENZING_MONITORING_PERIOD_IN_SECONDS
-              Value: "60"
-            - Name: SENZING_READ_QUEUE_MAXSIZE
-              Value: "200"
-            - Name: SENZING_RECORD_MAX
-              Value: !FindInMap [Constants, StreamProducer, RecordMax]
-            - Name: SENZING_RECORD_MIN
-              Value: !FindInMap [Constants, StreamProducer, RecordMin]
-            - Name: SENZING_RECORD_MONITOR
-              Value: "100000"
-            - Name: SENZING_SQS_QUEUE_URL
-              Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsInput.QueueName}"
-            - Name: SENZING_SUBCOMMAND
-              Value: json-to-sqs
-            - Name: SENZING_THREADS_PER_PRINT
-              Value: "30"
-          Essential: true
-          Image: !FindInMap
-            - SenzingVersionMap
-            - !Ref SenzingVersion
-            - StreamProducer
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: job
-          Name: producer
-          Privileged: false
-          ReadonlyRootFilesystem: false
-      Cpu: "1024"
-      ExecutionRoleArn: !GetAtt IamRoleStreamProducer.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-stream-producer"
-      Memory: "8192"
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-stream-producer"
-      TaskRoleArn: !GetAtt IamRoleStreamProducer.Arn
     Type: AWS::ECS::TaskDefinition
 
   EcsTaskDefinitionWebApp:
@@ -3240,11 +3042,6 @@ Outputs:
           - SenzingVersionMap
           - !Ref SenzingVersion
           - StreamLoader
-        - ", StreamProducer:"
-        - !FindInMap
-          - SenzingVersionMap
-          - !Ref SenzingVersion
-          - StreamProducer
         - ", WebApp:"
         - !FindInMap
           - SenzingVersionMap
@@ -3257,21 +3054,21 @@ Outputs:
           - Xterm
 
   QueueDeadLetter:
-    Condition: IfUsingQueues
+    Condition: IfRunStreamLoader
     Description: "URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queuedeadletter"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-deadletter"
     Value: !Ref SqsDeadLetter
 
   QueueInput:
-    Condition: IfUsingQueues
+    Condition: IfRunStreamLoader
     Description: "URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queueinput"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-input"
     Value: !Ref SqsInput
 
   QueueOutput:
-    Condition: IfUsingQueues
+    Condition: IfRunStreamLoader
     Description: "URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queueoutput"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-output"
