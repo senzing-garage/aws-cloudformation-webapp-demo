@@ -176,16 +176,14 @@ Rules:
 Mappings:
   SenzingVersionMap:
     "3.2.0":
-      ApiServer: public.ecr.aws/senzing/senzing-poc-server:3.2.2
       Redoer: public.ecr.aws/senzing/redoer:2.1.0
       SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.2.0
       StreamLoader: public.ecr.aws/senzing/stream-loader:2.1.0
-      WebApp: public.ecr.aws/senzing/entity-search-web-app:2.7.1
+      WebApp: docker.io/senzing/web-app-demo:2.4.1
       Xterm: public.ecr.aws/senzing/xterm:1.4.1
 
   Constants:
     Run:
-      ApiServer: Yes
       Redoer: Yes
       StreamLoader: Yes
       WebApp: Yes
@@ -199,10 +197,6 @@ Mappings:
 # -----------------------------------------------------------------------------
 
 Conditions:
-  IfRunApiServer: !Equals
-    - !FindInMap [Constants, Run, ApiServer]
-    - Yes
-
   IfRunRedoer: !Equals
     - !FindInMap [Constants, Run, Redoer]
     - Yes
@@ -221,12 +215,7 @@ Conditions:
 
   # -- Compound "if" conditions --------------------------------------------
 
-  IfUsingApiServer: !Or
-    - !Condition IfRunApiServer
-    - !Condition IfRunWebApp
-
   IfUsingWeb: !Or
-    - !Condition IfRunApiServer
     - !Condition IfRunWebApp
     - !Condition IfRunXterm
 
@@ -252,24 +241,6 @@ Resources:
 
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
   # AWS Console: https://console.aws.amazon.com/iam/home?#/roles > Search for {stack}
-
-  IamRoleApiServer:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action:
-              - sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-                - sqs.amazonaws.com
-        Version: "2012-10-17"
-      Description: !Sub "${AWS::StackName}-iam-role-api-server"
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-api-server"
-    Type: AWS::IAM::Role
 
   IamRoleDebug:
     Properties:
@@ -370,6 +341,7 @@ Resources:
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
+                - sqs.amazonaws.com
         Version: "2012-10-17"
       Description: !Sub "${AWS::StackName}-iam-role-web-app"
       Tags:
@@ -474,7 +446,6 @@ Resources:
               - "*"
         Version: "2012-10-17"
       Roles:
-        - !Ref IamRoleApiServer
         - !Ref IamRoleG2ConfigTool
         - !Ref IamRoleLambda
         - !Ref IamRoleRedoer
@@ -536,6 +507,25 @@ Resources:
         - !Ref IamRoleStreamLoader
     Type: AWS::IAM::Policy
 
+  IamPolicySqsProducer:
+    Condition: IfRunStreamLoader
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-producer"
+      PolicyDocument:
+        Statement:
+          - Action:
+              - sqs:SendMessage
+              - sqs:GetQueueAttributes
+            Effect: Allow
+            Resource:
+              - !GetAtt SqsDeadLetter.Arn
+              - !GetAtt SqsInput.Arn
+              - !GetAtt SqsOutput.Arn
+        Version: "2012-10-17"
+      Roles:
+        - !Ref IamRoleWebApp
+    Type: AWS::IAM::Policy
+
   IamPolicyTaskRunner:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
@@ -549,7 +539,6 @@ Resources:
               - "*"
         Version: "2012-10-17"
       Roles:
-        - !Ref IamRoleApiServer
         - !Ref IamRoleG2ConfigTool
         - !Ref IamRoleLambda
         - !Ref IamRoleRedoer
@@ -818,19 +807,8 @@ Resources:
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
   # AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups: > Search for {stack}-ec2-security-group-alb-public > Inbound rules
 
-  Ec2SecurityGroupIngressApiServerPublic:
-    Condition: IfUsingApiServer
-    Properties:
-      Description: Allow Health Check on Container 8250 from ALB
-      FromPort: 8250
-      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
-      IpProtocol: tcp
-      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
-      ToPort: 8250
-    Type: AWS::EC2::SecurityGroupIngress
-
   Ec2SecurityGroupIngressApiServerPrivate:
-    Condition: IfUsingApiServer
+    Condition: IfRunWebApp
     Properties:
       CidrIp:
         Fn::ImportValue:
@@ -1826,7 +1804,7 @@ Resources:
   # AWS Console: https://console.aws.amazon.com/ec2/v2/home?#TargetGroups: > Search for {stack}
 
   TargetGroupApiServerPrivate:
-    Condition: IfUsingApiServer
+    Condition: IfRunWebApp
     DependsOn:
       - LoadBalancerPrivate
     Properties:
@@ -1843,36 +1821,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-tg-api-pvt"
-      TargetGroupAttributes:
-        - Key: deregistration_delay.timeout_seconds
-          Value: "60"
-        - Key: slow_start.duration_seconds
-          Value: "120"
-      TargetType: ip
-      UnhealthyThresholdCount: 5
-      VpcId:
-        Fn::ImportValue:
-          Fn::Sub: "${DatabaseStack}-ec2-VpcId"
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-
-  TargetGroupApiServerPublic:
-    Condition: IfUsingApiServer
-    DependsOn:
-      - LoadBalancerPublic
-    Properties:
-      HealthCheckIntervalSeconds: 80
-      HealthCheckPath: "/api/heartbeat"
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 50
-      HealthyThresholdCount: 2
-      Matcher:
-        HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-tg-api-pub"
-      Port: 8250
-      Protocol: HTTP
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-tg-api-pub"
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: "60"
@@ -1973,7 +1921,7 @@ Resources:
   # AWS Console: https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers: > {name} > "Listeners" tab
 
   ListenerApiServerPrivate:
-    Condition: IfUsingApiServer
+    Condition: IfRunWebApp
     Properties:
       DefaultActions:
         - TargetGroupArn: !Ref TargetGroupApiServerPrivate
@@ -2004,30 +1952,6 @@ Resources:
 
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
   # AWS Console: https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers: > {name} > "Listeners" tab > "View/edit rules"
-
-  ListenerRuleApiServer:
-    Condition: IfUsingApiServer
-    Properties:
-      Actions:
-        - AuthenticateCognitoConfig:
-            OnUnauthenticatedRequest: authenticate
-            Scope: openid
-            UserPoolArn: !GetAtt "UserPool.Arn"
-            UserPoolClientId: !Ref UserPoolClient
-            UserPoolDomain: !Ref UserPoolDomain
-          Order: 1
-          Type: authenticate-cognito
-        - Type: "forward"
-          TargetGroupArn: !Ref TargetGroupApiServerPublic
-          Order: 2
-      Conditions:
-        - Field: "path-pattern"
-          Values:
-            - "/api/*"
-            - "/api"
-      ListenerArn: !Ref ListenerPort443
-      Priority: 2
-    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
   ListenerRuleWebApp:
     Condition: IfRunWebApp
@@ -2218,68 +2142,6 @@ Resources:
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html
   # AWS Console: https://console.aws.amazon.com/ecs/home?#/taskDefinitions > Search for {stack}
 
-  EcsTaskDefinitionApiServer:
-    Condition: IfUsingApiServer
-    Properties:
-      ContainerDefinitions:
-        - Environment:
-            - Name: SENZING_API_SERVER_ALLOWED_ORIGINS
-              Value: "*"
-            - Name: SENZING_API_SERVER_BIND_ADDR
-              Value: all
-            - Name: SENZING_API_SERVER_ENABLE_ADMIN
-              Value: "true"
-            - Name: SENZING_API_SERVER_INIT_JSON
-              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
-            - Name: SENZING_API_SERVER_PORT
-              Value: "8250"
-            - Name: SENZING_API_SERVER_SKIP_ENGINE_PRIMING
-              Value: "true"
-            - Name: SENZING_API_SERVER_SKIP_STARTUP_PERF
-              Value: "true"
-            - Name: SENZING_API_SERVER_URL_BASE_PATH
-              Value: /api
-            - Name: SENZING_API_SERVER_DEBUG
-              Value: "false"
-            - Name: SENZING_API_SERVER_VERBOSE
-              Value: "false"
-            - Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
-            - Name: SENZING_SQS_LOAD_QUEUE_URL
-              Value: !If [IfRunStreamLoader, !Ref SqsInput, ""]
-            - Name: SENZING_SQS_INFO_QUEUE_URL
-              Value: !If [IfRunStreamLoader, !Ref SqsOutput, ""]
-          Essential: true
-          Image: !FindInMap
-            - SenzingVersionMap
-            - !Ref SenzingVersion
-            - ApiServer
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: service
-          Name: api-server
-          PortMappings:
-            - ContainerPort: 8250
-              HostPort: 8250
-              Protocol: tcp
-          Privileged: false
-          ReadonlyRootFilesystem: false
-      Cpu: "2048"
-      ExecutionRoleArn: !GetAtt IamRoleApiServer.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-api-server"
-      Memory: "16384"
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-api-server"
-      TaskRoleArn: !GetAtt IamRoleApiServer.Arn
-    Type: AWS::ECS::TaskDefinition
-
   EcsTaskDefinitionRedoer:
     Condition: IfRunRedoer
     Properties:
@@ -2389,10 +2251,36 @@ Resources:
     Properties:
       ContainerDefinitions:
         - Environment:
+            - Name: SENZING_API_SERVER_ALLOWED_ORIGINS
+              Value: "*"
+            - Name: SENZING_API_SERVER_BIND_ADDR
+              Value: all
+            - Name: SENZING_API_SERVER_ENABLE_ADMIN
+              Value: "true"
+            - Name: SENZING_API_SERVER_INIT_JSON
+              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
+            - Name: SENZING_API_SERVER_PORT
+              Value: "8250"
+            - Name: SENZING_API_SERVER_SKIP_ENGINE_PRIMING
+              Value: "true"
+            - Name: SENZING_API_SERVER_SKIP_STARTUP_PERF
+              Value: "true"
             - Name: SENZING_API_SERVER_URL
               Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250/api"
             - Name: SENZING_WEB_SERVER_PORT
               Value: "8251"
+            - Name: SENZING_API_SERVER_URL_BASE_PATH
+              Value: /api
+            - Name: SENZING_API_SERVER_DEBUG
+              Value: "false"
+            - Name: SENZING_API_SERVER_VERBOSE
+              Value: "false"
+            - Name: SENZING_ENGINE_CONFIGURATION_JSON
+              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
+            - Name: SENZING_SQS_LOAD_QUEUE_URL
+              Value: !If [IfRunStreamLoader, !Ref SqsInput, ""]
+            - Name: SENZING_SQS_INFO_QUEUE_URL
+              Value: !If [IfRunStreamLoader, !Ref SqsOutput, ""]
             - Name: SENZING_WEB_SERVER_VIRTUAL_PATH
               Value: /app
             - Name: SENZING_WEB_SERVER_ADMIN_AUTH_MODE
@@ -2418,6 +2306,9 @@ Resources:
               awslogs-stream-prefix: service
           Name: webapp
           PortMappings:
+            - ContainerPort: 8250
+              HostPort: 8250
+              Protocol: tcp
             - ContainerPort: 8251
               HostPort: 8251
               Protocol: tcp
@@ -2426,10 +2317,10 @@ Resources:
               Protocol: tcp
           Privileged: false
           ReadonlyRootFilesystem: false
-      Cpu: "1024"
+      Cpu: "2048"
       ExecutionRoleArn: !GetAtt IamRoleWebApp.Arn
       Family: !Sub "${AWS::StackName}-task-definition-webapp"
-      Memory: "8192"
+      Memory: "16384"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -2490,43 +2381,6 @@ Resources:
 
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
   # AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > "Services" tab
-
-  EcsServiceApiServer:
-    Condition: IfUsingApiServer
-    DependsOn:
-      - ListenerPort443
-      - ListenerRuleApiServer
-    Properties:
-      Cluster: !Ref EcsCluster
-      DesiredCount: 1
-      EnableECSManagedTags: true
-      LaunchType: FARGATE
-      LoadBalancers:
-        - ContainerPort: 8250
-          ContainerName: api-server
-          TargetGroupArn: !Ref TargetGroupApiServerPrivate
-        - ContainerPort: 8250
-          ContainerName: api-server
-          TargetGroupArn: !Ref TargetGroupApiServerPublic
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
-          SecurityGroups:
-            - !Ref Ec2SecurityGroupLoadBalancerPrivate
-            - !Ref Ec2SecurityGroupLoadBalancerPublic
-          Subnets:
-            - Fn::ImportValue:
-                Fn::Sub: "${DatabaseStack}-subnet-private-1"
-            - Fn::ImportValue:
-                Fn::Sub: "${DatabaseStack}-subnet-private-2"
-      PlatformVersion: 1.4.0
-      PropagateTags: TASK_DEFINITION
-      ServiceName: api-server
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-service-api-server"
-      TaskDefinition: !Ref EcsTaskDefinitionApiServer
-    Type: AWS::ECS::Service
 
   EcsServiceRedoer:
     Condition: IfRunRedoer
@@ -2594,6 +2448,9 @@ Resources:
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
+        - ContainerPort: 8250
+          ContainerName: webapp
+          TargetGroupArn: !Ref TargetGroupApiServerPrivate
         - ContainerName: webapp
           ContainerPort: 8251
           TargetGroupArn: !Ref TargetGroupWebApp
@@ -2604,6 +2461,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
+            - !Ref Ec2SecurityGroupLoadBalancerPrivate
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
             - Fn::ImportValue:
@@ -2657,21 +2515,6 @@ Resources:
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-applicationautoscaling-scalabletarget.html
   # AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > {Service Name} > "Auto Scaling" tab
 
-  ApplicationAutoScalingScalableTargetApiServer:
-    Condition: IfUsingApiServer
-    Properties:
-      MaxCapacity: 200
-      MinCapacity: 1
-      ResourceId: !Sub "service/${EcsCluster}/${EcsServiceApiServer.Name}"
-      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
-      ScalableDimension: ecs:service:DesiredCount
-      ServiceNamespace: ecs
-      SuspendedState:
-        DynamicScalingInSuspended: false
-        DynamicScalingOutSuspended: false
-        ScheduledScalingSuspended: false
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-
   ApplicationAutoScalingScalableTargetStreamLoader:
     Condition: IfRunStreamLoader
     Properties:
@@ -2704,20 +2547,6 @@ Resources:
 
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-applicationautoscaling-scalingpolicy.html
   # AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > {Service Name} > "Auto Scaling" tab
-
-  ApplicationAutoScalingScalingPolicyApiServer:
-    Condition: IfUsingApiServer
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-scaling-policy-api-server"
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref ApplicationAutoScalingScalableTargetApiServer
-      TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: ECSServiceAverageCPUUtilization
-        ScaleInCooldown: 1200
-        ScaleOutCooldown: 300
-        TargetValue: 30
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
 
   ApplicationAutoScalingScalingPolicyStreamLoader:
     Condition: IfRunStreamLoader
@@ -2789,12 +2618,7 @@ Outputs:
       Name: !Sub "${AWS::StackName}-image-versions-part-1"
     Value: !Join
       - ""
-      - - "ApiServer:"
-        - !FindInMap
-          - SenzingVersionMap
-          - !Ref SenzingVersion
-          - ApiServer
-        - ", Redoer:"
+      - - "Redoer:"
         - !FindInMap
           - SenzingVersionMap
           - !Ref SenzingVersion
@@ -2860,27 +2684,15 @@ Outputs:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
-  UrlApiServer:
-    Condition: IfUsingApiServer
-    Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#urlapiserver"
-    Export:
-      Name: !Sub "${AWS::StackName}-url-api-server"
-    Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/"
-
-  UrlApiServerHeartbeat:
-    Condition: IfUsingApiServer
-    Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#urlapiserverheartbeat"
-    Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/heartbeat/"
-
   UrlPrivateApiServer:
-    Condition: IfUsingApiServer
+    Condition: IfRunWebApp
     Description: "Private URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#urlprivateapiserver"
     Export:
       Name: !Sub "${AWS::StackName}-private-url-api-server"
     Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250/api/"
 
   UrlPrivateApiServerHeartbeat:
-    Condition: IfUsingApiServer
+    Condition: IfRunWebApp
     Description: "Private URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#urlprivateapiserverheartbeat"
     Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250/api/heartbeat/"
 
