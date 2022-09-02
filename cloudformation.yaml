@@ -7,9 +7,9 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-senzing-stack-basic: 1.2.10
+  Senzing aws-cloudformation-webapp-demo: 1.0.0
   For more information see
-  https://github.com/Senzing/aws-cloudformation-ecs-senzing-stack-basic
+  https://github.com/Senzing/aws-cloudformation-webapp-demo
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -75,7 +75,7 @@ Parameters:
     AllowedPattern: ".+|^I_ACCEPT_THE_SENZING_EULA$"
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
     Default: "_"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#accepteula"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#accepteula"
     Type: String
 
   CidrInbound:
@@ -84,39 +84,39 @@ Parameters:
     MinLength: 9
     MaxLength: 18
     Default: "10.0.0.0/32"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#cidrinbound"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#cidrinbound"
     Type: String
 
   CognitoAdminEmail:
     AllowedPattern: '.+|^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
     ConstraintDescription: Entering initial user email address is required to proceed
     Default: "_"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#cognitoadminemail"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#cognitoadminemail"
     Type: String
 
   DatabaseStack:
     Default: "_"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#databasestack"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#databasestack"
     Type: String
 
   SecurityResponsibility:
     AllowedPattern: ".+|^I AGREE$"
     ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
     Default: "_"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#securityresponsibility"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#securityresponsibility"
     Type: String
 
   SenzingLicenseAsBase64:
-    ConstraintDescription: "Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#senzinglicenseasbase64"
+    ConstraintDescription: "Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-webapp-demo/#senzinglicenseasbase64"
     Default: " "
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#senzinglicenseasbase64"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#senzinglicenseasbase64"
     Type: String
 
   SenzingVersion:
     AllowedValues:
       - "3.2.0"
     Default: "3.2.0"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#senzingversion"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#senzingversion"
     Type: String
 
 # -----------------------------------------------------------------------------
@@ -179,10 +179,8 @@ Mappings:
       ApiServer: public.ecr.aws/senzing/senzing-poc-server:3.2.2
       Redoer: public.ecr.aws/senzing/redoer:2.1.0
       SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.2.0
-      Sshd: public.ecr.aws/senzing/sshd:1.4.0
       StreamLoader: public.ecr.aws/senzing/stream-loader:2.1.0
       StreamProducer: public.ecr.aws/senzing/stream-producer:1.7.3
-      Swagger: public.ecr.aws/senzing/swagger-ui:v4.13.2
       WebApp: public.ecr.aws/senzing/entity-search-web-app:2.7.1
       Xterm: public.ecr.aws/senzing/xterm:1.4.1
 
@@ -190,15 +188,12 @@ Mappings:
     Run:
       ApiServer: Yes
       Redoer: Yes
-      Sshd: Yes
-      SshdMax: No
       StreamLoader: Yes
-      StreamProducer: Yes
-      Swagger: No
+      StreamProducer: No
       WebApp: Yes
       Xterm: Yes
     Stack:
-      Name: basic
+      Name: webappdemo
     StreamProducer:
       DataSource: TEST
       EntityType: GENERIC
@@ -220,24 +215,12 @@ Conditions:
     - !FindInMap [Constants, Run, Redoer]
     - Yes
 
-  IfRunSshd: !Equals
-    - !FindInMap [Constants, Run, Sshd]
-    - Yes
-
-  IfRunSshdMax: !Equals
-    - !FindInMap [Constants, Run, SshdMax]
-    - Yes
-
   IfRunStreamLoader: !Equals
     - !FindInMap [Constants, Run, StreamLoader]
     - Yes
 
   IfRunStreamProducer: !Equals
     - !FindInMap [Constants, Run, StreamProducer]
-    - Yes
-
-  IfRunSwagger: !Equals
-    - !FindInMap [Constants, Run, Swagger]
     - Yes
 
   IfRunWebApp: !Equals
@@ -252,16 +235,11 @@ Conditions:
 
   IfUsingApiServer: !Or
     - !Condition IfRunApiServer
-    - !Condition IfRunSwagger
     - !Condition IfRunWebApp
 
   IfUsingRedoQueues: !Or
     - !Condition IfRunRedoer
     - !Condition IfRunRedoer
-
-  IfUsingSshd: !Or
-    - !Condition IfRunSshd
-    - !Condition IfRunSshdMax
 
   IfUsingQueues: !Or
     - !Condition IfRunStreamLoader
@@ -269,7 +247,6 @@ Conditions:
 
   IfUsingWeb: !Or
     - !Condition IfRunApiServer
-    - !Condition IfRunSwagger
     - !Condition IfRunWebApp
     - !Condition IfRunXterm
 
@@ -385,23 +362,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-iam-role-redoer"
     Type: AWS::IAM::Role
 
-  IamRoleSshd:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action:
-              - sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-        Version: "2012-10-17"
-      Description: !Sub "${AWS::StackName}-iam-role-sshd"
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-sshd"
-    Type: AWS::IAM::Role
-
   IamRoleStreamLoader:
     Properties:
       AssumeRolePolicyDocument:
@@ -436,24 +396,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-iam-role-stream-producer"
-    Type: AWS::IAM::Role
-
-  IamRoleSwagger:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action:
-              - sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-                - route53.amazonaws.com
-        Version: "2012-10-17"
-      Description: !Sub "${AWS::StackName}-iam-role-swagger"
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-swagger"
     Type: AWS::IAM::Role
 
   IamRoleWebApp:
@@ -507,7 +449,6 @@ Resources:
         Version: "2012-10-17"
       Roles:
         - !Ref IamRoleLambda
-        - !Ref IamRoleSwagger
         - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
@@ -525,7 +466,6 @@ Resources:
         Version: "2012-10-17"
       Roles:
         - !Ref IamRoleLambda
-        - !Ref IamRoleSwagger
     Type: AWS::IAM::Policy
 
   IamPolicyCognito:
@@ -541,7 +481,6 @@ Resources:
         Version: "2012-10-17"
       Roles:
         - !Ref IamRoleLambda
-        - !Ref IamRoleSwagger
         - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
@@ -577,10 +516,8 @@ Resources:
         - !Ref IamRoleG2ConfigTool
         - !Ref IamRoleLambda
         - !Ref IamRoleRedoer
-        - !Ref IamRoleSshd
         - !Ref IamRoleStreamLoader
         - !Ref IamRoleStreamProducer
-        - !Ref IamRoleSwagger
         - !Ref IamRoleWebApp
         - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
@@ -617,7 +554,6 @@ Resources:
         Version: "2012-10-17"
       Roles:
         - !Ref IamRoleLambda
-        - !Ref IamRoleSwagger
         - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
@@ -718,9 +654,7 @@ Resources:
         - !Ref IamRoleG2ConfigTool
         - !Ref IamRoleLambda
         - !Ref IamRoleRedoer
-        - !Ref IamRoleSshd
         - !Ref IamRoleStreamLoader
-        - !Ref IamRoleSwagger
         - !Ref IamRoleWebApp
         - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
@@ -982,22 +916,6 @@ Resources:
           Fn::Sub: "${DatabaseStack}-ec2-VpcId"
     Type: AWS::EC2::SecurityGroup
 
-  Ec2SecurityGroupSshd:
-    Condition: IfUsingSshd
-    Properties:
-      GroupDescription: !Sub "${AWS::StackName} - SSHD service open ports."
-      SecurityGroupEgress:
-        - CidrIp: 0.0.0.0/0
-          Description: All
-          IpProtocol: "-1"
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-sshd"
-      VpcId:
-        Fn::ImportValue:
-          Fn::Sub: "${DatabaseStack}-ec2-VpcId"
-    Type: AWS::EC2::SecurityGroup
-
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
   # AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups: > Search for {stack}-ec2-security-group-alb-public > Inbound rules
 
@@ -1050,28 +968,6 @@ Resources:
         Fn::ImportValue:
           Fn::Sub: "${DatabaseStack}-ec2-security-group-internal"
       ToPort: 2049
-    Type: AWS::EC2::SecurityGroupIngress
-
-  Ec2SecurityGroupIngressSsh:
-    Condition: IfUsingSshd
-    Properties:
-      CidrIp: !Ref CidrInbound
-      Description: SSH
-      FromPort: 22
-      GroupId: !Ref Ec2SecurityGroupSshd
-      IpProtocol: tcp
-      ToPort: 22
-    Type: AWS::EC2::SecurityGroupIngress
-
-  Ec2SecurityGroupIngressSwagger:
-    Condition: IfRunSwagger
-    Properties:
-      Description: Allow Health Check on Container 8080 from ALB
-      FromPort: 8080
-      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
-      IpProtocol: tcp
-      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
-      ToPort: 8080
     Type: AWS::EC2::SecurityGroupIngress
 
   Ec2SecurityGroupIngressWebApp:
@@ -2019,17 +1915,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-lambda-runner-senzing-engine-configuration-json"
     Type: Custom::LambdaRunnerSenzingEngineConfigurationJson
 
-  LambdaRunnerSshPassword:
-    Condition: IfUsingSshd
-    Properties:
-      ClusterId: !Ref EcsCluster
-      Length: 16
-      ServiceToken: !GetAtt LambdaFunctionRandomString.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-ssh-password"
-    Type: Custom::LambdaRunnerSshPassword
-
   LambdaRunnerStackNameAsLower:
     Properties:
       InputString: !Sub "${AWS::StackName}"
@@ -2215,34 +2100,6 @@ Resources:
           Fn::Sub: "${DatabaseStack}-ec2-VpcId"
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
-  TargetGroupSwagger:
-    Condition: IfRunSwagger
-    DependsOn:
-      - LoadBalancerPublic
-    Properties:
-      HealthCheckIntervalSeconds: 80
-      HealthCheckPath: "/swagger/"
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 50
-      HealthyThresholdCount: 2
-      Matcher:
-        HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-tg-swagger"
-      Port: 8080
-      Protocol: HTTP
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-swagger"
-      TargetGroupAttributes:
-        - Key: deregistration_delay.timeout_seconds
-          Value: "60"
-      TargetType: ip
-      UnhealthyThresholdCount: 5
-      VpcId:
-        Fn::ImportValue:
-          Fn::Sub: "${DatabaseStack}-ec2-VpcId"
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-
   TargetGroupWebApp:
     Condition: IfRunWebApp
     DependsOn:
@@ -2350,7 +2207,7 @@ Resources:
         - Order: 1
           RedirectConfig:
             Host: hub.senzing.com
-            Path: /aws-cloudformation-ecs-senzing-stack-basic/
+            Path: /aws-cloudformation-webapp-demo/
             Port: "443"
             Protocol: HTTPS
             StatusCode: HTTP_301
@@ -2385,30 +2242,6 @@ Resources:
             - "/api"
       ListenerArn: !Ref ListenerPort443
       Priority: 2
-    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
-
-  ListenerRuleSwagger:
-    Condition: IfRunSwagger
-    Properties:
-      Actions:
-        - AuthenticateCognitoConfig:
-            OnUnauthenticatedRequest: authenticate
-            Scope: openid
-            UserPoolArn: !GetAtt "UserPool.Arn"
-            UserPoolClientId: !Ref UserPoolClient
-            UserPoolDomain: !Ref UserPoolDomain
-          Order: 1
-          Type: authenticate-cognito
-        - Order: 2
-          TargetGroupArn: !Ref TargetGroupSwagger
-          Type: "forward"
-      Conditions:
-        - Field: "path-pattern"
-          Values:
-            - "/swagger/*"
-            - "/swagger"
-      ListenerArn: !Ref ListenerPort443
-      Priority: 4
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
   ListenerRuleWebApp:
@@ -2521,11 +2354,6 @@ Resources:
                         (For more details see the <a href="https://github.com/Senzing/entity-search-web-app">GitHub repository</a>)
                     </li>
                     <br />
-                    <li style="${SwaggerUI}">
-                        <b>Senzing API Server: </b> <a href="https://${Host}/api/heartbeat">https://${Host}/api/heartbeat</a>
-                      <br />
-                        (For more details see the <a href="https://github.com/Senzing/senzing-api-server">GitHub repository</a>)
-                    </li>
                     <br />
                     <li style="${Xterm}">
                         <b>Senzing XTerm: </b> <a href="https://${Host}/xterm">https://${Host}/xterm</a>
@@ -2533,27 +2361,11 @@ Resources:
                         (For more details see the <a href="https://github.com/Senzing/docker-xterm">GitHub repository</a>)
                     </li>
                     <br />
-                    <li style="${SwaggerUI}">
-                        <b>Senzing HTTP REST API: </b> <a href="https://${Host}/swagger">https://${Host}/swagger</a>
-                        <br />
-                        (For more details see the <a href="https://github.com/Senzing/senzing-rest-api-specification">GitHub repository</a>)
-                          <ul>
-                              <li><b>Servers:</b> <code>{protocol}://{host}:{port}{path}</code></li>
-                              <li><b>Server variables</b>:
-                                  <ol>
-                                      <li><b>protocol:</b> https</li>
-                                      <li><b>host:</b> ${Host}</li>
-                                      <li><b>port:</b> 443</li>
-                                      <li><b>path:</b> /api</li>
-                                  </ol>
-                              </li>
-                          </ul>
-                      </li>
                   </ol>
               </p>
               <p>
                   For more information on the
-                  <a href="https://github.com/Senzing/aws-cloudformation-ecs-senzing-stack-basic">Senzing basic components</a>
+                  <a href="https://github.com/Senzing/aws-cloudformation-webapp-demo">Senzing basic components</a>
                   "${AWS::StackName}"
                   AWS Cloudformation,
                   contact ${Contact}.
@@ -2561,7 +2373,6 @@ Resources:
               </html>
             - Contact: !Ref CognitoAdminEmail
               Host: !GetAtt LoadBalancerPublic.DNSName
-              SwaggerUI: !If [IfRunSwagger, "", "display: none"]
               WebApp: !If [IfRunWebApp, "", "display: none"]
               Xterm: !If [IfRunXterm, "", "display: none"]
           EmailSubject: !Sub "Information for AWS Cloudformation ${AWS::StackName} stack"
@@ -2831,88 +2642,6 @@ Resources:
       TaskRoleArn: !GetAtt IamRoleRedoer.Arn
     Type: AWS::ECS::TaskDefinition
 
-  EcsTaskDefinitionSshd:
-    Condition: IfRunSshd
-    Properties:
-      ContainerDefinitions:
-        - Environment:
-            - Name: ROOT_PASSWORD
-              Value: !GetAtt LambdaRunnerSshPassword.RandomString
-            - Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
-            - Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
-              Value: "true"
-          Essential: true
-          Image: !FindInMap
-            - SenzingVersionMap
-            - !Ref SenzingVersion
-            - Sshd
-          LinuxParameters:
-            Capabilities:
-              Add:
-                - SYS_PTRACE
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: service
-          Name: sshd
-          Privileged: false
-          ReadonlyRootFilesystem: false
-      Cpu: "2048"
-      ExecutionRoleArn: !GetAtt IamRoleSshd.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-sshd"
-      Memory: "12288"
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-sshd"
-    Type: AWS::ECS::TaskDefinition
-
-  EcsTaskDefinitionSshdMax:
-    Condition: IfRunSshdMax
-    Properties:
-      ContainerDefinitions:
-        - Environment:
-            - Name: ROOT_PASSWORD
-              Value: !GetAtt LambdaRunnerSshPassword.RandomString
-            - Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
-            - Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
-              Value: "true"
-          Essential: true
-          Image: !FindInMap
-            - SenzingVersionMap
-            - !Ref SenzingVersion
-            - Sshd
-          LinuxParameters:
-            Capabilities:
-              Add:
-                - SYS_PTRACE
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: service
-          Name: sshd
-          Privileged: false
-          ReadonlyRootFilesystem: false
-      Cpu: "4096"
-      ExecutionRoleArn: !GetAtt IamRoleSshd.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-sshd-max"
-      Memory: "30720"
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-sshd-max"
-    Type: AWS::ECS::TaskDefinition
-
   EcsTaskDefinitionStreamLoader:
     Condition: IfRunStreamLoader
     Properties:
@@ -3021,46 +2750,6 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ecs-task-definition-stream-producer"
       TaskRoleArn: !GetAtt IamRoleStreamProducer.Arn
-    Type: AWS::ECS::TaskDefinition
-
-  EcsTaskDefinitionSwagger:
-    Condition: IfRunSwagger
-    Properties:
-      ContainerDefinitions:
-        - Environment:
-            - Name: BASE_URL
-              Value: /swagger
-            - Name: URL
-              Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/main/senzing-rest-api.yaml"
-          Essential: true
-          Image: !FindInMap
-            - SenzingVersionMap
-            - !Ref SenzingVersion
-            - Swagger
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: service
-          Name: swagger
-          PortMappings:
-            - ContainerPort: 8080
-              HostPort: 8080
-              Protocol: tcp
-          Privileged: false
-          ReadonlyRootFilesystem: false
-      Cpu: "1024"
-      ExecutionRoleArn: !GetAtt IamRoleSwagger.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-swagger"
-      Memory: "8192"
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-swagger"
-      TaskRoleArn: !GetAtt IamRoleSwagger.Arn
     Type: AWS::ECS::TaskDefinition
 
   EcsTaskDefinitionWebApp:
@@ -3261,54 +2950,6 @@ Resources:
       TaskDefinition: !Ref EcsTaskDefinitionRedoerProducer
     Type: AWS::ECS::Service
 
-  EcsServiceSshd:
-    Condition: IfRunSshd
-    Properties:
-      Cluster: !Ref EcsCluster
-      DesiredCount: 1
-      EnableECSManagedTags: true
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          SecurityGroups:
-            - !Ref Ec2SecurityGroupSshd
-          Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
-      PlatformVersion: 1.4.0
-      PropagateTags: TASK_DEFINITION
-      ServiceName: sshd
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-service-sshd"
-      TaskDefinition: !Ref EcsTaskDefinitionSshd
-    Type: AWS::ECS::Service
-
-  EcsServiceSshdMax:
-    Condition: IfRunSshdMax
-    Properties:
-      Cluster: !Ref EcsCluster
-      DesiredCount: 1
-      EnableECSManagedTags: true
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          SecurityGroups:
-            - !Ref Ec2SecurityGroupSshd
-          Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
-      PlatformVersion: 1.4.0
-      PropagateTags: TASK_DEFINITION
-      ServiceName: sshd-max
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-service-sshd-max"
-      TaskDefinition: !Ref EcsTaskDefinitionSshdMax
-    Type: AWS::ECS::Service
-
   EcsServiceStreamLoader:
     Condition: IfRunStreamLoader
     Properties:
@@ -3334,39 +2975,6 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ecs-service-stream-loader"
       TaskDefinition: !Ref EcsTaskDefinitionStreamLoader
-    Type: AWS::ECS::Service
-
-  EcsServiceSwagger:
-    Condition: IfRunSwagger
-    DependsOn:
-      - ListenerPort443
-      - ListenerRuleSwagger
-    Properties:
-      Cluster: !Ref EcsCluster
-      DesiredCount: 1
-      EnableECSManagedTags: true
-      LaunchType: FARGATE
-      LoadBalancers:
-        - ContainerName: swagger
-          ContainerPort: 8080
-          TargetGroupArn: !Ref TargetGroupSwagger
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
-          SecurityGroups:
-            - !Ref Ec2SecurityGroupLoadBalancerPublic
-          Subnets:
-            - Fn::ImportValue:
-                Fn::Sub: "${DatabaseStack}-subnet-private-1"
-            - Fn::ImportValue:
-                Fn::Sub: "${DatabaseStack}-subnet-private-2"
-      PlatformVersion: 1.4.0
-      PropagateTags: TASK_DEFINITION
-      ServiceName: swagger
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-service-swagger"
-      TaskDefinition: !Ref EcsTaskDefinitionSwagger
     Type: AWS::ECS::Service
 
   EcsServiceWebApp:
@@ -3573,27 +3181,27 @@ Outputs:
 
   0penFirst:
     Condition: IfRunWebApp
-    Description: "URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#0penfirst"
+    Description: "URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#0penfirst"
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   AccountID:
-    Description: "The accountID Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#accountid"
+    Description: "The accountID Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#accountid"
     Export:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
 
   CertificateArn:
     Condition: IfUsingWeb
-    Description: "ARN of the SSL certificate. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#certificatearn"
+    Description: "ARN of the SSL certificate. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#certificatearn"
     Export:
       Name: !Sub "${AWS::StackName}-certificate-arn"
     Value: !GetAtt IamServerCertificate.Arn
 
   Host:
     Condition: IfUsingWeb
-    Description: "Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#host"
+    Description: "Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#host"
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
@@ -3620,11 +3228,6 @@ Outputs:
           - SenzingVersionMap
           - !Ref SenzingVersion
           - SenzingApiTools
-        - ", Sshd:"
-        - !FindInMap
-          - SenzingVersionMap
-          - !Ref SenzingVersion
-          - Sshd
 
   ImageVersionsPart2:
     Description: "List of Docker images used in this stack, part 2."
@@ -3642,11 +3245,6 @@ Outputs:
           - SenzingVersionMap
           - !Ref SenzingVersion
           - StreamProducer
-        - ", Swagger:"
-        - !FindInMap
-          - SenzingVersionMap
-          - !Ref SenzingVersion
-          - Swagger
         - ", WebApp:"
         - !FindInMap
           - SenzingVersionMap
@@ -3660,134 +3258,113 @@ Outputs:
 
   QueueDeadLetter:
     Condition: IfUsingQueues
-    Description: "URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queuedeadletter"
+    Description: "URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queuedeadletter"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-deadletter"
     Value: !Ref SqsDeadLetter
 
   QueueInput:
     Condition: IfUsingQueues
-    Description: "URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queueinput"
+    Description: "URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queueinput"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-input"
     Value: !Ref SqsInput
 
   QueueOutput:
     Condition: IfUsingQueues
-    Description: "URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queueoutput"
+    Description: "URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queueoutput"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-output"
     Value: !Ref SqsOutput
 
   QueueRedoerDeadLetter:
     Condition: IfUsingRedoQueues
-    Description: "URL of the redoer dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queueredoerdeadletter"
+    Description: "URL of the redoer dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queueredoerdeadletter"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-deadletter"
     Value: !Ref SqsRedoerDeadLetter
 
   QueueRedoerInput:
     Condition: IfUsingRedoQueues
-    Description: "URL of the queue holding redo records to be processed. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queueredoerinput"
+    Description: "URL of the queue holding redo records to be processed. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queueredoerinput"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-input"
     Value: !Ref SqsRedoerInput
 
   QueueRedoerOutput:
     Condition: IfUsingRedoQueues
-    Description: "URL of the queue with redoer info records. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queueredoeroutput"
+    Description: "URL of the queue with redoer info records. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queueredoeroutput"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-output"
     Value: !Ref SqsRedoerOutput
 
-  SshPassword:
-    Condition: IfUsingSshd
-    Description: "The randomly generated password for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#sshpassword"
-    Export:
-      Name: !Sub "${AWS::StackName}-ssh-password"
-    Value: !GetAtt LambdaRunnerSshPassword.RandomString
-
-  SshUsername:
-    Condition: IfUsingSshd
-    Description: "The username for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#sshusername"
-    Export:
-      Name: !Sub "${AWS::StackName}-ssh-username"
-    Value: root
-
   SubnetPublic1:
-    Description: "The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#subnetpublic1"
+    Description: "The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#subnetpublic1"
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
-    Description: "The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#subnetpublic2"
+    Description: "The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#subnetpublic2"
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
   UrlApiServer:
     Condition: IfUsingApiServer
-    Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlapiserver"
+    Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#urlapiserver"
     Export:
       Name: !Sub "${AWS::StackName}-url-api-server"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/"
 
   UrlApiServerHeartbeat:
     Condition: IfUsingApiServer
-    Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlapiserverheartbeat"
+    Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#urlapiserverheartbeat"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/heartbeat/"
 
   UrlPrivateApiServer:
     Condition: IfUsingApiServer
-    Description: "Private URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlprivateapiserver"
+    Description: "Private URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#urlprivateapiserver"
     Export:
       Name: !Sub "${AWS::StackName}-private-url-api-server"
     Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250/api/"
 
   UrlPrivateApiServerHeartbeat:
     Condition: IfUsingApiServer
-    Description: "Private URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlprivateapiserverheartbeat"
+    Description: "Private URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#urlprivateapiserverheartbeat"
     Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250/api/heartbeat/"
-
-  UrlSwagger:
-    Condition: IfRunSwagger
-    Description: "URL for Swagger. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlswagger"
-    Export:
-      Name: !Sub "${AWS::StackName}-url-swagger"
-    Value: !Sub "https://${LoadBalancerPublic.DNSName}/swagger/"
 
   UrlWebApp:
     Condition: IfRunWebApp
-    Description: "URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlwebapp"
+    Description: "URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#urlwebapp"
     Export:
       Name: !Sub "${AWS::StackName}-url-webapp"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   UrlXterm:
     Condition: IfRunXterm
-    Description: "URL for Senzing XTerm. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlxterm"
+    Description: "URL for Senzing XTerm. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#urlxterm"
     Export:
       Name: !Sub "${AWS::StackName}-url-xterm"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/xterm/"
 
   UserInitPassword:
     Condition: IfUsingWeb
-    Description: "One time password for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#userinitpassword"
+    Description: "One time password for web access. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#userinitpassword"
     Export:
       Name: !Sub "${AWS::StackName}-user-init-password"
     Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
 
   UserName:
     Condition: IfUsingWeb
-    Description: "Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#username"
+    Description: "Username for web access. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#username"
     Export:
       Name: !Sub "${AWS::StackName}-user-name"
     Value: !Ref CognitoAdminEmail
 
   UserPool:
     Condition: IfUsingWeb
-    Description: "Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#userpool"
+    Description: "Username for web access. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#userpool"
     Export:
       Name: !Sub "${AWS::StackName}-user-pool"
     Value: !Sub "https://console.aws.amazon.com/cognito/users/#/pool/${UserPool}/users"
