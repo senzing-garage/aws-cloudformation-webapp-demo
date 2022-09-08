@@ -2162,7 +2162,7 @@ Resources:
             - Name: SENZING_SUBCOMMAND
               Value: redo
             - Name: SENZING_THREADS_PER_PROCESS
-              Value: "12"
+              Value: "20"
           Essential: true
           Image: !FindInMap
             - SenzingVersionMap
@@ -2180,7 +2180,7 @@ Resources:
       Cpu: "4096"
       ExecutionRoleArn: !GetAtt IamRoleRedoer.Arn
       Family: !Sub "${AWS::StackName}-task-definition-redoer"
-      Memory: "16384"
+      Memory: "30720"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -2218,7 +2218,7 @@ Resources:
             - Name: SENZING_SUBCOMMAND
               Value: sqs
             - Name: SENZING_THREADS_PER_PROCESS
-              Value: "8"
+              Value: "20"
           Essential: true
           Image: !FindInMap
             - SenzingVersionMap
@@ -2233,10 +2233,10 @@ Resources:
           Name: stream-loader
           Privileged: false
           ReadonlyRootFilesystem: false
-      Cpu: "2048"
+      Cpu: "4096"
       ExecutionRoleArn: !GetAtt IamRoleStreamLoader.Arn
       Family: !Sub "${AWS::StackName}-task-definition-stream-loader"
-      Memory: "12288"
+      Memory: "30720"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
