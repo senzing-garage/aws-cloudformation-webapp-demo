@@ -6,6 +6,10 @@ The `aws-cloudformation-webapp-demo` AWS Cloudformation template
 deploys Senzing for use with a previously deployed
 [aws-cloudformation-database-cluster](https://github.com/Senzing/aws-cloudformation-database-cluster) Cloudformation stack.
 
+This stack provides a web application interface to the senzing engine.  It allows
+records to be loaded and entities and their connections explored through the web
+application.
+
 ## How to deploy without much thinking
 
 1. :warning: **Warning:** This Cloudformation deployment will accrue AWS costs.
@@ -49,7 +53,7 @@ deploys Senzing for use with a previously deployed
     2. At lower-right, click "Next" button.
 2. In **Configure stack options**
     1. At lower-right, click "Next" button.
-3. In **Review senzing-basic**
+3. In **Review senzing stack**
     1. Near the bottom, in **Capabilities**
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
     2. At lower-right, click "Create stack" button.
