@@ -2,9 +2,13 @@
 
 ## Synopsis
 
-The `aws-cloudformation-ecs-senzing-stack-basic` AWS Cloudformation template
+The `aws-cloudformation-webapp-demo` AWS Cloudformation template
 deploys Senzing for use with a previously deployed
 [aws-cloudformation-database-cluster](https://github.com/Senzing/aws-cloudformation-database-cluster) Cloudformation stack.
+
+This stack provides a web application interface to the senzing engine.  It allows
+records to be loaded and entities and their connections explored through the web
+application.
 
 ## How to deploy without much thinking
 
@@ -19,7 +23,7 @@ deploys Senzing for use with a previously deployed
     ```
     curl -X GET \
         --output ~/cloudformation.yaml \
-        https://raw.githubusercontent.com/Senzing/aws-cloudformation-ecs-senzing-stack-basic/main/cloudformation.yaml
+        https://raw.githubusercontent.com/Senzing/aws-cloudformation-webapp-demo/main/cloudformation.yaml
     ```
 3. It is highly suggested to take a look at the AWS Cloudformation Template that has been downloaded.  This template is an example that deploys and configures a number of services and facilities.  While it is a working and complete example, each business may have different requirements and their account may not have all the privledges required to deploy it.  Furthermore, the examples change over time and these files are meant to be treated as code files so they should be put under source control.
 1. Visit the [AWS Cloudformation home](https://console.aws.amazon.com/cloudformation/home).
@@ -49,7 +53,7 @@ deploys Senzing for use with a previously deployed
     2. At lower-right, click "Next" button.
 2. In **Configure stack options**
     1. At lower-right, click "Next" button.
-3. In **Review senzing-basic**
+3. In **Review senzing stack**
     1. Near the bottom, in **Capabilities**
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
     2. At lower-right, click "Create stack" button.
