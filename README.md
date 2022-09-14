@@ -19,7 +19,7 @@ application.
 1. :warning: **Warning:**
    This Cloudformation deployment only runs in
    [supported AWS Regions](https://github.com/Senzing/knowledge-base/blob/main/lists/aws-supported-regions.md).
-1. Download the appropriate [AWS Cloudformation template example](https://raw.githubusercontent.com/Senzing/aws-cloudformation-ecs-senzing-stack-basic/main/cloudformation.yaml) from this repository to your local device.  Example:
+1. Download the appropriate [AWS Cloudformation template example](https://raw.githubusercontent.com/Senzing/aws-cloudformation-webapp-demo/main/cloudformation.yaml) from this repository to your local device.  Example:
     ```
     curl -X GET \
         --output ~/cloudformation.yaml \
