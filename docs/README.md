@@ -115,13 +115,13 @@ describing where we can improve.   Now on with the show...
         1. In **Security responsibility**
             1. Understand the nature of the security in the deployment.
             1. Once understood, enter "I AGREE".
-    2. At lower-right, click "Next" button.
-2. In **Configure stack options**
     1. At lower-right, click "Next" button.
-3. In **Review senzing stack**
+1. In **Configure stack options**
+    1. At lower-right, click "Next" button.
+1. In **Review senzing stack**
     1. Near the bottom, in **Capabilities**
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
-    2. At lower-right, click "Create stack" button.
+    1. At lower-right, click "Create stack" button.
 
 ## Using deployment
 
@@ -141,8 +141,6 @@ describing where we can improve.   Now on with the show...
 ## Additional topics
 
 1. [How to load AWS Cloudformation queue](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/load-aws-cloudformation-queue.md)
-1. [How to migrate Senzing in AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/migrate-senzing-in-cloudformation.md)
-1. [How to update Senzing license](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/update-senzing-license.md)
 
 ### Review AWS Cloudformation
 
@@ -366,7 +364,6 @@ Technical information on AWS Cloudformation parameters can be seen at
    The hostname of the loadbalancer that is a proxy to all of the services.
 1. **Details:**
    More information at [AWS Load Balancers console](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:).
-   Also used as the `host` value when using [UrlSwagger](#urlswagger).
 
 ### QueueDeadLetter
 
@@ -422,8 +419,6 @@ Technical information on AWS Cloudformation parameters can be seen at
    [Senzing API Server](https://github.com/Senzing/senzing-api-server)
    directly from within the same VPC.
    The `/heartbeat` URI path simply demonstrates that the API server is responding.
-   For more URIs, see
-   [SwaggerUrl output value](#urlswagger).
 
 ### UrlWebApp
 
