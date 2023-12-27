@@ -3,10 +3,10 @@
 ## Synopsis
 
 The
-[aws-cloudformation-webapp-demo](https://github.com/Senzing/aws-cloudformation-webapp-demo)
+[aws-cloudformation-webapp-demo](https://github.com/senzing-garage/aws-cloudformation-webapp-demo)
 cloudformation template deploys Senzing using an AWS Cloudformation template.
 Before deploying this Cloudformation template,
-[aws-cloudformation-database-cluster](https://github.com/Senzing/aws-cloudformation-database-cluster)
+[aws-cloudformation-database-cluster](https://github.com/senzing-garage/aws-cloudformation-database-cluster)
 must be deployed.
 
 ## Overview
@@ -40,14 +40,14 @@ Arrows represent data flow.
 
 This docker formation brings up the following docker containers:
 
-1. *[senzing/entity-web-search-app](https://github.com/Senzing/entity-search-web-app)*
-1. *[senzing/redoer](https://github.com/Senzing/redoer)*
-1. *[senzing/senzing-api-server](https://github.com/Senzing/senzing-api-server)*
-1. *[senzing/stream-loader](https://github.com/Senzing/stream-loader)*
-1. *[senzing/xterm](https://github.com/Senzing/docker-xterm)*
+1. *[senzing/entity-web-search-app](https://github.com/senzing-garage/entity-search-web-app)*
+1. *[senzing/redoer](https://github.com/senzing-garage/redoer)*
+1. *[senzing/senzing-api-server](https://github.com/senzing-garage/senzing-api-server)*
+1. *[senzing/stream-loader](https://github.com/senzing-garage/stream-loader)*
+1. *[senzing/xterm](https://github.com/senzing-garage/docker-xterm)*
 
 GitHub repository for
-[aws-cloudformation-webapp-demo](https://github.com/Senzing/aws-cloudformation-webapp-demo).
+[aws-cloudformation-webapp-demo](https://github.com/senzing-garage/aws-cloudformation-webapp-demo).
 
 ### Contents
 
@@ -64,12 +64,12 @@ GitHub repository for
 
 At [Senzing](http://senzing.com),
 we strive to create GitHub documentation in a
-"[don't make me think](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/dont-make-me-think.md)" style.
+"[don't make me think](https://github.com/senzing-garage/knowledge-base/blob/main/WHATIS/dont-make-me-think.md)" style.
 For the most part, instructions are copy and paste.
 Whenever thinking is needed, it's marked with a "thinking" icon :thinking:.
 Whenever customization is needed, it's marked with a "pencil" icon :pencil2:.
 If the instructions are not clear, please let us know by opening a new
-[Documentation issue](https://github.com/Senzing/aws-cloudformation-webapp-demo/issues/new?template=documentation_request.md)
+[Documentation issue](https://github.com/senzing-garage/aws-cloudformation-webapp-demo/issues/new?template=documentation_request.md)
 describing where we can improve.   Now on with the show...
 
 ### Legend
@@ -84,7 +84,7 @@ describing where we can improve.   Now on with the show...
 
 - **Time:** Budget 40 minutes to get the demonstration up-and-running.
 - **Background knowledge:** This repository assumes a working knowledge of:
-  - [AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/aws-cloudformation.md)
+  - [AWS Cloudformation](https://github.com/senzing-garage/knowledge-base/blob/main/WHATIS/aws-cloudformation.md)
 
 ## Demonstrate using AWS Console
 
@@ -106,7 +106,7 @@ describing where we can improve.   Now on with the show...
             1. Optionally, add a license string.
         1. In **Identify existing resources**
             1. Enter the stack name of the previously deployed
-               [aws-cloudformation-database-cluster](https://github.com/Senzing/aws-cloudformation-database-cluster)
+               [aws-cloudformation-database-cluster](https://github.com/senzing-garage/aws-cloudformation-database-cluster)
                Cloudformation stack
                Example:  `senzing-db`
         1. In **Security**
@@ -140,12 +140,12 @@ describing where we can improve.   Now on with the show...
 
 ## Additional topics
 
-1. [How to load AWS Cloudformation queue](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/load-aws-cloudformation-queue.md)
+1. [How to load AWS Cloudformation queue](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/load-aws-cloudformation-queue.md)
 
 ### Review AWS Cloudformation
 
 The AWS resources created by the
-[cloudformation.yaml](https://github.com/Senzing/aws-cloudformation-webapp-demo/blob/main/cloudformation.yaml)
+[cloudformation.yaml](https://github.com/senzing-garage/aws-cloudformation-webapp-demo/blob/main/cloudformation.yaml)
 template can be see in the [AWS Management Console](https://console.aws.amazon.com).
 
 1. CloudFormation
@@ -207,7 +207,7 @@ Technical information on AWS Cloudformation parameters can be seen at
    This step is intentionally tricky to ensure that you make a conscious effort to accept the EULA.
 1. **Required:** Yes
 1. **Type:** String
-1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_accept_eula).
+1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_accept_eula).
 1. **Default:** None
 
 ### CidrInbound
@@ -245,10 +245,10 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    The name of the cloudformation stack deployed with the
-   [aws-cloudformation-database-cluster](https://github.com/Senzing/aws-cloudformation-database-cluster)
+   [aws-cloudformation-database-cluster](https://github.com/senzing-garage/aws-cloudformation-database-cluster)
    cloudformation template.
    The DatabaseStack exported output values are used by the
-   [aws-cloudformation-webapp-demo](https://github.com/Senzing/aws-cloudformation-webapp-demo).
+   [aws-cloudformation-webapp-demo](https://github.com/senzing-garage/aws-cloudformation-webapp-demo).
 1. **Required:** Yes
 1. **Type:** String
 1. **Example:** `senzing-db`
@@ -409,14 +409,14 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
+   [Senzing API Server](https://github.com/senzing-garage/senzing-api-server)
    directly from within the same VPC.
 
 ### UrlPrivateApiServerHeartbeat
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
+   [Senzing API Server](https://github.com/senzing-garage/senzing-api-server)
    directly from within the same VPC.
    The `/heartbeat` URI path simply demonstrates that the API server is responding.
 
@@ -424,13 +424,13 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing Entity Search Web App](https://github.com/Senzing/entity-search-web-app).
+   [Senzing Entity Search Web App](https://github.com/senzing-garage/entity-search-web-app).
 
 ### UrlXterm
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing Xterm](https://github.com/Senzing/docker-xterm).
+   [Senzing Xterm](https://github.com/senzing-garage/docker-xterm).
 1. **Usage:**
    From this Linux terminal, `G2Command.py`, `G2Explorer.py`, `G2ConfigTool.py`,
    can be run.

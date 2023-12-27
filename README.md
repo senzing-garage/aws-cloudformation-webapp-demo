@@ -1,10 +1,22 @@
 # aws-cloudformation-webapp-demo
 
+If you are beginning your journey with
+[Senzing](https://senzing.com/),
+please start with
+[Senzing Quick Start guides](https://docs.senzing.com/quickstart/).
+
+You are in the
+[Senzing Garage](https://github.com/senzing-garage)
+where projects are "tinkered" on.
+Although this GitHub repository may help you understand an approach to using Senzing,
+it's not considered to be "production ready" and is not considered to be part of the Senzing product.
+Heck, it may not even be appropriate for your application of Senzing!
+
 ## Synopsis
 
 The `aws-cloudformation-webapp-demo` AWS Cloudformation template
 deploys Senzing for use with a previously deployed
-[aws-cloudformation-database-cluster](https://github.com/Senzing/aws-cloudformation-database-cluster) Cloudformation stack.
+[aws-cloudformation-database-cluster](https://github.com/senzing-garage/aws-cloudformation-database-cluster) Cloudformation stack.
 
 This stack provides a web application interface to the senzing engine.  It allows
 records to be loaded and entities and their connections explored through the web
@@ -18,7 +30,7 @@ application.
    can help evaluate costs.
 1. :warning: **Warning:**
    This Cloudformation deployment only runs in
-   [supported AWS Regions](https://github.com/Senzing/knowledge-base/blob/main/lists/aws-supported-regions.md).
+   [supported AWS Regions](https://github.com/senzing-garage/knowledge-base/blob/main/lists/aws-supported-regions.md).
 1. Download the appropriate [AWS Cloudformation template example](https://raw.githubusercontent.com/Senzing/aws-cloudformation-webapp-demo/main/cloudformation.yaml) from this repository to your local device.  Example:
 
     ```console
@@ -43,7 +55,7 @@ application.
             1. Optionally, add a license string.
         1. In **Identify existing resources**
             1. Enter the stack name of the previously deployed
-               [aws-cloudformation-database-cluster](https://github.com/Senzing/aws-cloudformation-database-cluster)
+               [aws-cloudformation-database-cluster](https://github.com/senzing-garage/aws-cloudformation-database-cluster)
                Cloudformation stack
                Example:  `senzing-db`
         1. In **Security**
@@ -63,4 +75,4 @@ application.
 ## Additional topics
 
 1. [Details of deployment](docs/README.md)
-1. [How to load AWS Cloudformation queue](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/load-aws-cloudformation-queue.md)
+1. [How to load AWS Cloudformation queue](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/load-aws-cloudformation-queue.md)
