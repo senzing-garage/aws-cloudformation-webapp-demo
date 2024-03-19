@@ -123,7 +123,8 @@ Parameters:
       - "3.5.2"
       - "3.5.3"
       - "3.6.0"
-    Default: "3.6.0"
+      - "3.9.0"
+    Default: "3.9.0"
     Description: "Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#senzingversion"
     Type: String
 
@@ -237,6 +238,12 @@ Mappings:
       StreamLoader: public.ecr.aws/senzing/stream-loader:2.2.8
       WebApp: docker.io/senzing/web-app-demo:2.4.11
       Xterm: public.ecr.aws/senzing/xterm:1.4.11
+    "3.9.0":
+      Redoer: public.ecr.aws/senzing/redoer:2.1.12
+      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.9.0
+      StreamLoader: public.ecr.aws/senzing/stream-loader:2.2.11
+      WebApp: docker.io/senzing/web-app-demo:2.4.15
+      Xterm: public.ecr.aws/senzing/xterm:1.4.14
 
   Constants:
     Run:
