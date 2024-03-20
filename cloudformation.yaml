@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-webapp-demo: 1.0.8
+  Senzing aws-cloudformation-webapp-demo: 1.0.9
   For more information see
   https://github.com/senzing-garage/aws-cloudformation-webapp-demo
 
@@ -243,12 +243,12 @@ Mappings:
       SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.9.0
       StreamLoader: public.ecr.aws/senzing/stream-loader:2.2.11
       WebApp: docker.io/senzing/web-app-demo:2.4.15
-      Xterm: public.ecr.aws/senzing/xterm:1.4.14
+      Xterm: public.ecr.aws/senzing/xterm:1.4.15
 
   Constants:
     Run:
       Redoer: Yes
-      StreamLoader: Yes
+      StreamLoader: No
       WebApp: Yes
       Xterm: Yes
     Stack:
@@ -2315,48 +2315,50 @@ Resources:
     Properties:
       ContainerDefinitions:
         - Environment:
-            - Name: SENZING_API_SERVER_ALLOWED_ORIGINS
-              Value: "*"
-            - Name: SENZING_API_SERVER_BIND_ADDR
-              Value: all
-            - Name: SENZING_API_SERVER_ENABLE_ADMIN
-              Value: "true"
             - Name: SENZING_API_SERVER_INIT_JSON
               Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
-            - Name: SENZING_API_SERVER_PORT
-              Value: "8250"
             - Name: SENZING_API_SERVER_SKIP_ENGINE_PRIMING
               Value: "true"
             - Name: SENZING_API_SERVER_SKIP_STARTUP_PERF
               Value: "true"
-            - Name: SENZING_API_SERVER_URL
-              Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250/api"
-            - Name: SENZING_WEB_SERVER_PORT
-              Value: "8251"
             - Name: SENZING_API_SERVER_URL_BASE_PATH
               Value: /api
             - Name: SENZING_API_SERVER_DEBUG
               Value: "false"
             - Name: SENZING_API_SERVER_VERBOSE
               Value: "false"
+            - Name: SENZING_DATA_MART_POSTGRESQL_DATABASE
+              Value:
+                Fn::ImportValue:
+                  Fn::Sub: "${DatabaseStack}-database-name"
+            - Name: SENZING_DATA_MART_POSTGRESQL_HOST
+              Value:
+                Fn::ImportValue:
+                  Fn::Sub: "${DatabaseStack}-database-host-core"
+            - Name: SENZING_DATA_MART_POSTGRESQL_PASSWORD
+              Value:
+                Fn::ImportValue:
+                  Fn::Sub: "${DatabaseStack}-database-password"
+            - Name: SENZING_DATA_MART_POSTGRESQL_PORT
+              Value:
+                Fn::ImportValue:
+                  Fn::Sub: "${DatabaseStack}-database-port-core"
+            - Name: SENZING_DATA_MART_POSTGRESQL_USER
+              Value:
+                Fn::ImportValue:
+                  Fn::Sub: "${DatabaseStack}-database-username"
             - Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
-            - Name: SENZING_SQS_LOAD_QUEUE_URL
-              Value: !If [IfRunStreamLoader, !Ref SqsInput, ""]
-            - Name: SENZING_SQS_INFO_QUEUE_URL
-              Value: !If [IfRunStreamLoader, !Ref SqsOutput, ""]
-            - Name: SENZING_WEB_SERVER_VIRTUAL_PATH
-              Value: /app
-            - Name: SENZING_WEB_SERVER_ADMIN_AUTH_MODE
-              Value: NONE
-            - Name: SENZING_WEB_SERVER_URL
-              Value: !Sub "http://${LoadBalancerPublic.DNSName}:8251/app"
-            - Name: SENZING_WEB_SERVER_PROXY_LOGLEVEL
-              Value: error
+            - Name: SENZING_WEB_SERVER_ADMIN_AUTH_PATH
+              Value: "http://localhost:8251/app"
             - Name: SENZING_WEB_SERVER_INTERNAL_URL
               Value: "http://localhost:8251/app"
+            - Name: SENZING_WEB_SERVER_PROXY_LOGLEVEL
+              Value: error
             - Name: SENZING_WEB_SERVER_STREAM_CLIENT_URL
               Value: !Sub "wss://${LoadBalancerPublic.DNSName}/app/ws"
+            - Name: SENZING_WEB_SERVER_VIRTUAL_PATH
+              Value: /app
           Essential: true
           Image: !FindInMap
             - SenzingVersionMap
@@ -2597,7 +2599,7 @@ Resources:
   ApplicationAutoScalingScalableTargetWebApp:
     Condition: IfRunWebApp
     Properties:
-      MaxCapacity: 200
+      MaxCapacity: 1
       MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceWebApp.Name}"
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
