@@ -114,14 +114,6 @@ Parameters:
 
   SenzingVersion:
     AllowedValues:
-      - "3.2.0"
-      - "3.3.0"
-      - "3.3.1"
-      - "3.3.2"
-      - "3.4.0"
-      - "3.5.0"
-      - "3.5.2"
-      - "3.5.3"
       - "3.6.0"
       - "3.9.0"
     Default: "3.9.0"
@@ -184,71 +176,20 @@ Rules:
 
 Mappings:
   SenzingVersionMap:
-    "3.2.0":
-      Redoer: public.ecr.aws/senzing/redoer:2.1.0
-      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.2.0
-      StreamLoader: public.ecr.aws/senzing/stream-loader:2.1.0
-      WebApp: docker.io/senzing/web-app-demo:2.4.1
-      Xterm: public.ecr.aws/senzing/xterm:1.4.1
-    "3.3.0":
-      Redoer: public.ecr.aws/senzing/redoer:2.1.1
-      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.3.0
-      StreamLoader: public.ecr.aws/senzing/stream-loader:2.1.1
-      WebApp: docker.io/senzing/web-app-demo:2.4.3
-      Xterm: public.ecr.aws/senzing/xterm:1.4.3
-    "3.3.1":
-      Redoer: public.ecr.aws/senzing/redoer:2.1.2
-      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.3.1
-      StreamLoader: public.ecr.aws/senzing/stream-loader:2.1.2
-      WebApp: docker.io/senzing/web-app-demo:2.4.4
-      Xterm: public.ecr.aws/senzing/xterm:1.4.4
-    "3.3.2":
-      Redoer: public.ecr.aws/senzing/redoer:2.1.3
-      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.3.2
-      StreamLoader: public.ecr.aws/senzing/stream-loader:2.2.2
-      WebApp: docker.io/senzing/web-app-demo:2.4.5
-      Xterm: public.ecr.aws/senzing/xterm:1.4.5
-    "3.4.0":
-      Redoer: public.ecr.aws/senzing/redoer:2.1.5
-      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.4.0
-      StreamLoader: public.ecr.aws/senzing/stream-loader:2.2.4
-      WebApp: docker.io/senzing/web-app-demo:2.4.6
-      Xterm: public.ecr.aws/senzing/xterm:1.4.6
-    "3.5.0":
-      Redoer: public.ecr.aws/senzing/redoer:2.1.6
-      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.5.0
-      StreamLoader: public.ecr.aws/senzing/stream-loader:2.2.5
-      WebApp: docker.io/senzing/web-app-demo:2.4.7
-      Xterm: public.ecr.aws/senzing/xterm:1.4.8
-    "3.5.2":
-      Redoer: public.ecr.aws/senzing/redoer:2.1.7
-      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.5.2
-      StreamLoader: public.ecr.aws/senzing/stream-loader:2.2.6
-      WebApp: docker.io/senzing/web-app-demo:2.4.8
-      Xterm: public.ecr.aws/senzing/xterm:1.4.9
-    "3.5.3":
-      Redoer: public.ecr.aws/senzing/redoer:2.1.8
-      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.5.3
-      StreamLoader: public.ecr.aws/senzing/stream-loader:2.2.7
-      WebApp: docker.io/senzing/web-app-demo:2.4.10
-      Xterm: public.ecr.aws/senzing/xterm:1.4.10
     "3.6.0":
       Redoer: public.ecr.aws/senzing/redoer:2.1.9
       SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.6.0
-      StreamLoader: public.ecr.aws/senzing/stream-loader:2.2.8
       WebApp: docker.io/senzing/web-app-demo:2.4.11
       Xterm: public.ecr.aws/senzing/xterm:1.4.11
     "3.9.0":
       Redoer: public.ecr.aws/senzing/redoer:2.1.12
       SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.9.0
-      StreamLoader: public.ecr.aws/senzing/stream-loader:2.2.11
-      WebApp: docker.io/senzing/web-app-demo:2.4.15
+      WebApp: docker.io/senzing/web-app-demo:2.4.16
       Xterm: public.ecr.aws/senzing/xterm:1.4.15
 
   Constants:
     Run:
       Redoer: Yes
-      StreamLoader: No
       WebApp: Yes
       Xterm: Yes
     Stack:
@@ -262,10 +203,6 @@ Mappings:
 Conditions:
   IfRunRedoer: !Equals
     - !FindInMap [Constants, Run, Redoer]
-    - Yes
-
-  IfRunStreamLoader: !Equals
-    - !FindInMap [Constants, Run, StreamLoader]
     - Yes
 
   IfRunWebApp: !Equals
@@ -351,7 +288,6 @@ Resources:
                 - ecs-tasks.amazonaws.com
                 - lambda.amazonaws.com
                 - route53.amazonaws.com
-                - sqs.amazonaws.com
         Version: "2012-10-17"
       Description: !Sub "${AWS::StackName}-iam-role-lambda"
       Tags:
@@ -376,24 +312,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-iam-role-redoer"
     Type: AWS::IAM::Role
 
-  IamRoleStreamLoader:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action:
-              - sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-                - sqs.amazonaws.com
-        Version: "2012-10-17"
-      Description: !Sub "${AWS::StackName}-iam-role-stream-loader"
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-stream-loader"
-    Type: AWS::IAM::Role
-
   IamRoleWebApp:
     Properties:
       AssumeRolePolicyDocument:
@@ -404,7 +322,6 @@ Resources:
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
-                - sqs.amazonaws.com
         Version: "2012-10-17"
       Description: !Sub "${AWS::StackName}-iam-role-web-app"
       Tags:
@@ -512,7 +429,6 @@ Resources:
         - !Ref IamRoleG2ConfigTool
         - !Ref IamRoleLambda
         - !Ref IamRoleRedoer
-        - !Ref IamRoleStreamLoader
         - !Ref IamRoleWebApp
         - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
@@ -550,46 +466,6 @@ Resources:
         - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
-  IamPolicySqsConsumer:
-    Condition: IfRunStreamLoader
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-consumer"
-      PolicyDocument:
-        Statement:
-          - Action:
-              - sqs:ChangeMessageVisibility
-              - sqs:DeleteMessage
-              - sqs:GetQueueAttributes
-              - sqs:ReceiveMessage
-            Effect: Allow
-            Resource:
-              - !GetAtt SqsDeadLetter.Arn
-              - !GetAtt SqsInput.Arn
-              - !GetAtt SqsOutput.Arn
-        Version: "2012-10-17"
-      Roles:
-        - !Ref IamRoleStreamLoader
-    Type: AWS::IAM::Policy
-
-  IamPolicySqsProducer:
-    Condition: IfRunStreamLoader
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-producer"
-      PolicyDocument:
-        Statement:
-          - Action:
-              - sqs:SendMessage
-              - sqs:GetQueueAttributes
-            Effect: Allow
-            Resource:
-              - !GetAtt SqsDeadLetter.Arn
-              - !GetAtt SqsInput.Arn
-              - !GetAtt SqsOutput.Arn
-        Version: "2012-10-17"
-      Roles:
-        - !Ref IamRoleWebApp
-    Type: AWS::IAM::Policy
-
   IamPolicyTaskRunner:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
@@ -606,7 +482,6 @@ Resources:
         - !Ref IamRoleG2ConfigTool
         - !Ref IamRoleLambda
         - !Ref IamRoleRedoer
-        - !Ref IamRoleStreamLoader
         - !Ref IamRoleWebApp
         - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
@@ -1016,62 +891,6 @@ Resources:
       RouteTableId: !Ref Ec2RouteTablePublic
       SubnetId: !Ref Ec2SubnetPublic2
     Type: AWS::EC2::SubnetRouteTableAssociation
-
-  # -- Queue --------------------------------------------------------------------
-
-  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sqs-queues.html
-  # AWS Console: https://console.aws.amazon.com/sqs/v2/home > Search on {stack}
-
-  SqsInput:
-    Condition: IfRunStreamLoader
-    Properties:
-      DelaySeconds: 0
-      KmsMasterKeyId: alias/aws/sqs
-      MaximumMessageSize: 262144
-      MessageRetentionPeriod: 1209600
-      QueueName: !Sub "${AWS::StackName}-sqs-input"
-      ReceiveMessageWaitTimeSeconds: 0
-      RedrivePolicy:
-        deadLetterTargetArn:
-          Fn::GetAtt:
-            - SqsDeadLetter
-            - Arn
-        maxReceiveCount: 100
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-sqs-input"
-      VisibilityTimeout: 14400
-    Type: AWS::SQS::Queue
-
-  SqsDeadLetter:
-    Condition: IfRunStreamLoader
-    Properties:
-      DelaySeconds: 0
-      KmsMasterKeyId: alias/aws/sqs
-      MaximumMessageSize: 262144
-      MessageRetentionPeriod: 1209600
-      QueueName: !Sub "${AWS::StackName}-sqs-dead-letter"
-      ReceiveMessageWaitTimeSeconds: 0
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-sqs-queue-dead"
-      VisibilityTimeout: 30
-    Type: AWS::SQS::Queue
-
-  SqsOutput:
-    Condition: IfRunStreamLoader
-    Properties:
-      DelaySeconds: 0
-      KmsMasterKeyId: alias/aws/sqs
-      MaximumMessageSize: 262144
-      MessageRetentionPeriod: 1209600
-      QueueName: !Sub "${AWS::StackName}-sqs-output"
-      ReceiveMessageWaitTimeSeconds: 0
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-sqs-output"
-      VisibilityTimeout: 300
-    Type: AWS::SQS::Queue
 
   # -- ECS Cluster --------------------------------------------------------------
 
@@ -2254,62 +2073,6 @@ Resources:
       TaskRoleArn: !GetAtt IamRoleRedoer.Arn
     Type: AWS::ECS::TaskDefinition
 
-  EcsTaskDefinitionStreamLoader:
-    Condition: IfRunStreamLoader
-    Properties:
-      ContainerDefinitions:
-        - Environment:
-            - Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
-            - Name: SENZING_DELAY_IN_SECONDS
-              Value: "900"
-            - Name: SENZING_DELAY_RANDOMIZED
-              Value: "true"
-            - Name: SENZING_GOVERNOR_CHECK_TIME_INTERVAL_IN_SECONDS
-              Value: "600"
-            - Name: SENZING_LOG_LEVEL
-              Value: info
-            - Name: SENZING_MONITORING_PERIOD_IN_SECONDS
-              Value: "600"
-            - Name: SENZING_PRIME_ENGINE
-              Value: "true"
-            - Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
-              Value: "true"
-            - Name: SENZING_SQS_INFO_QUEUE_URL
-              Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsOutput.QueueName}"
-            - Name: SENZING_SQS_QUEUE_URL
-              Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsInput.QueueName}"
-            - Name: SENZING_SUBCOMMAND
-              Value: sqs
-            - Name: SENZING_THREADS_PER_PROCESS
-              Value: "20"
-          Essential: true
-          Image: !FindInMap
-            - SenzingVersionMap
-            - !Ref SenzingVersion
-            - StreamLoader
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: service
-          Name: stream-loader
-          Privileged: false
-          ReadonlyRootFilesystem: false
-      Cpu: "4096"
-      ExecutionRoleArn: !GetAtt IamRoleStreamLoader.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-stream-loader"
-      Memory: "30720"
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-stream-loader"
-      TaskRoleArn: !GetAtt IamRoleStreamLoader.Arn
-    Type: AWS::ECS::TaskDefinition
-
   EcsTaskDefinitionWebApp:
     Condition: IfRunWebApp
     Properties:
@@ -2475,33 +2238,6 @@ Resources:
       TaskDefinition: !Ref EcsTaskDefinitionRedoer
     Type: AWS::ECS::Service
 
-  EcsServiceStreamLoader:
-    Condition: IfRunStreamLoader
-    Properties:
-      Cluster: !Ref EcsCluster
-      DesiredCount: 8
-      EnableECSManagedTags: true
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
-          SecurityGroups:
-            - Fn::ImportValue:
-                Fn::Sub: "${DatabaseStack}-ec2-security-group-internal"
-          Subnets:
-            - Fn::ImportValue:
-                Fn::Sub: "${DatabaseStack}-subnet-private-1"
-            - Fn::ImportValue:
-                Fn::Sub: "${DatabaseStack}-subnet-private-2"
-      PlatformVersion: 1.4.0
-      PropagateTags: TASK_DEFINITION
-      ServiceName: stream-loader
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-service-stream-loader"
-      TaskDefinition: !Ref EcsTaskDefinitionStreamLoader
-    Type: AWS::ECS::Service
-
   EcsServiceWebApp:
     Condition: IfRunWebApp
     DependsOn:
@@ -2581,21 +2317,6 @@ Resources:
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-applicationautoscaling-scalabletarget.html
   # AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > {Service Name} > "Auto Scaling" tab
 
-  ApplicationAutoScalingScalableTargetStreamLoader:
-    Condition: IfRunStreamLoader
-    Properties:
-      MaxCapacity: 200
-      MinCapacity: 1
-      ResourceId: !Sub "service/${EcsCluster}/${EcsServiceStreamLoader.Name}"
-      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
-      ScalableDimension: ecs:service:DesiredCount
-      ServiceNamespace: ecs
-      SuspendedState:
-        DynamicScalingInSuspended: false
-        DynamicScalingOutSuspended: false
-        ScheduledScalingSuspended: false
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-
   ApplicationAutoScalingScalableTargetWebApp:
     Condition: IfRunWebApp
     Properties:
@@ -2613,20 +2334,6 @@ Resources:
 
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-applicationautoscaling-scalingpolicy.html
   # AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > {Service Name} > "Auto Scaling" tab
-
-  ApplicationAutoScalingScalingPolicyStreamLoader:
-    Condition: IfRunStreamLoader
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-scaling-policy-stream-loader"
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref ApplicationAutoScalingScalableTargetStreamLoader
-      TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: ECSServiceAverageCPUUtilization
-        ScaleInCooldown: 1200
-        ScaleOutCooldown: 300
-        TargetValue: 30
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
 
   ApplicationAutoScalingScalingPolicyWebApp:
     Condition: IfRunWebApp
@@ -2694,11 +2401,6 @@ Outputs:
           - SenzingVersionMap
           - !Ref SenzingVersion
           - SenzingApiTools
-        - ", StreamLoader:"
-        - !FindInMap
-          - SenzingVersionMap
-          - !Ref SenzingVersion
-          - StreamLoader
         - ", WebApp:"
         - !FindInMap
           - SenzingVersionMap
@@ -2709,27 +2411,6 @@ Outputs:
           - SenzingVersionMap
           - !Ref SenzingVersion
           - Xterm
-
-  QueueDeadLetter:
-    Condition: IfRunStreamLoader
-    Description: "URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queuedeadletter"
-    Export:
-      Name: !Sub "${AWS::StackName}-sqs-deadletter"
-    Value: !Ref SqsDeadLetter
-
-  QueueInput:
-    Condition: IfRunStreamLoader
-    Description: "URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queueinput"
-    Export:
-      Name: !Sub "${AWS::StackName}-sqs-input"
-    Value: !Ref SqsInput
-
-  QueueOutput:
-    Condition: IfRunStreamLoader
-    Description: "URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#queueoutput"
-    Export:
-      Name: !Sub "${AWS::StackName}-sqs-output"
-    Value: !Ref SqsOutput
 
   SubnetPublic1:
     Description: "The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#subnetpublic1"
