@@ -184,7 +184,7 @@ Mappings:
     "3.9.0":
       Redoer: public.ecr.aws/senzing/redoer:2.1.12
       SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.9.0
-      WebApp: docker.io/senzing/web-app-demo:2.4.16
+      WebApp: docker.io/senzing/web-app-demo:2.4.17
       Xterm: public.ecr.aws/senzing/xterm:1.4.15
 
   Constants:
@@ -2084,6 +2084,8 @@ Resources:
               Value: "true"
             - Name: SENZING_API_SERVER_SKIP_STARTUP_PERF
               Value: "true"
+            - Name: SENZING_WEB_SERVER_PORT
+              Value: "8251"
             - Name: SENZING_API_SERVER_URL_BASE_PATH
               Value: /api
             - Name: SENZING_API_SERVER_DEBUG
@@ -2112,6 +2114,8 @@ Resources:
                   Fn::Sub: "${DatabaseStack}-database-username"
             - Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
+            - Name: SENZING_WEB_SERVER_ADMIN_AUTH_MODE
+              Value: NONE
             - Name: SENZING_WEB_SERVER_ADMIN_AUTH_PATH
               Value: "http://localhost:8251/app"
             - Name: SENZING_WEB_SERVER_INTERNAL_URL
@@ -2120,6 +2124,8 @@ Resources:
               Value: error
             - Name: SENZING_WEB_SERVER_STREAM_CLIENT_URL
               Value: !Sub "wss://${LoadBalancerPublic.DNSName}/app/ws"
+            - Name: SENZING_WEB_SERVER_URL
+              Value: !Sub "http://${LoadBalancerPublic.DNSName}:8251/app"
             - Name: SENZING_WEB_SERVER_VIRTUAL_PATH
               Value: /app
           Essential: true
