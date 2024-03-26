@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -
 
+## [1.0.9] - 2024-03-29
+
+### Changed in 1.0.9
+
+- removed stream-loader and queues
+- removed wss support
+- Updated to Senzing 3.9.0
+- updated docker images
+
 ## [1.0.8] - 2023-06-30
 
 ### Changed in 1.0.8
