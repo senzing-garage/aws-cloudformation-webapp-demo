@@ -2078,14 +2078,22 @@ Resources:
     Properties:
       ContainerDefinitions:
         - Environment:
+            - Name: SENZING_API_SERVER_ALLOWED_ORIGINS
+              Value: "*"
+            - Name: SENZING_API_SERVER_BIND_ADDR
+              Value: all
+            - Name: SENZING_API_SERVER_ENABLE_ADMIN
+              Value: "true"
             - Name: SENZING_API_SERVER_INIT_JSON
               Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
+            - Name: SENZING_API_SERVER_PORT
+              Value: "8250"
             - Name: SENZING_API_SERVER_SKIP_ENGINE_PRIMING
               Value: "true"
             - Name: SENZING_API_SERVER_SKIP_STARTUP_PERF
               Value: "true"
-            - Name: SENZING_WEB_SERVER_PORT
-              Value: "8251"
+            - Name: SENZING_API_SERVER_URL
+              Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250/api"
             - Name: SENZING_API_SERVER_URL_BASE_PATH
               Value: /api
             - Name: SENZING_API_SERVER_DEBUG
@@ -2120,6 +2128,8 @@ Resources:
               Value: "http://localhost:8251/app"
             - Name: SENZING_WEB_SERVER_INTERNAL_URL
               Value: "http://localhost:8251/app"
+            - Name: SENZING_WEB_SERVER_PORT
+              Value: "8251"
             - Name: SENZING_WEB_SERVER_PROXY_LOGLEVEL
               Value: error
             - Name: SENZING_WEB_SERVER_STREAM_CLIENT_URL
