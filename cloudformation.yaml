@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-webapp-demo: 1.0.9
+  Senzing aws-cloudformation-webapp-demo: 1.0.10
   For more information see
   https://github.com/senzing-garage/aws-cloudformation-webapp-demo
 
@@ -116,7 +116,8 @@ Parameters:
     AllowedValues:
       - '3.6.0'
       - '3.9.0'
-    Default: '3.9.0'
+      - '3.10.3'
+    Default: '3.10.3'
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-webapp-demo/#senzingversion'
     Type: String
 
@@ -186,6 +187,11 @@ Mappings:
       SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.9.0
       WebApp: docker.io/senzing/web-app-demo:2.4.17
       Xterm: public.ecr.aws/senzing/xterm:1.4.15
+    '3.10.3':
+      Redoer: public.ecr.aws/senzing/redoer:2.1.14
+      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.10.3
+      WebApp: docker.io/senzing/web-app-demo:2.4.20
+      Xterm: public.ecr.aws/senzing/xterm:1.4.17
 
   Constants:
     Run:
