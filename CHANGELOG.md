@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 -
+## [1.0.10] - 2024-06-26
+
+### Changed in 1.0.10
+
+- Updated to Senzing 3.10.3
+- updated docker images
 
 ## [1.0.9] - 2024-03-29
 
