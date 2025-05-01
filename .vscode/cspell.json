@@ -1,0 +1,41 @@
+{
+  // Version of the setting file.  Always 0.2
+  "version": "0.2",
+  // language - current active spelling language
+  "language": "en",
+  // words - list of words to be always considered correct
+  "words": [
+      "Senzing",
+      "CODEOWNER",
+      "ICLA",
+      "CCLA",
+      "otherwords",
+      "redoer",
+      "Fargate",
+      "Loadbalancers",
+      "stackoverflow",
+      "Cooldown",
+      "Awsvpc",
+      "awslogs",
+      "LOGLEVEL",
+      "Libfeat",
+      "octals",
+      "LKEY",
+      "EKEY",
+      "cfnresponse",
+      "boto",
+      "cidrblock",
+      "RESOURCEPATH",
+      "SUPPORTPATH",
+      "senzingapi",
+      "webappdemo",
+      "configtool",
+      "isinstance",
+      "isoformat",
+      "CONFIGPATH",
+      "LICENSESTRINGBASE"
+    ],
+  "ignorePaths": [
+    ".git/**"
+  ]
+}
