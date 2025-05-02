@@ -1,0 +1,41 @@
+{
+  // Version of the setting file.  Always 0.2
+  "version": "0.2",
+  // language - current active spelling language
+  "language": "en",
+  // words - list of words to be always considered correct
+  "words": [
+      "awslogs",
+      "Awsvpc",
+      "boto",
+      "CCLA",
+      "cfnresponse",
+      "cidrblock",
+      "CODEOWNER",
+      "CONFIGPATH",
+      "configtool",
+      "Cooldown",
+      "EKEY",
+      "Fargate",
+      "ICLA",
+      "isinstance",
+      "isoformat",
+      "Libfeat",
+      "LICENSESTRINGBASE",
+      "LKEY",
+      "Loadbalancers",
+      "LOGLEVEL",
+      "octals",
+      "otherwords",
+      "redoer",
+      "RESOURCEPATH",
+      "Senzing",
+      "senzingapi",
+      "stackoverflow",
+      "SUPPORTPATH",
+      "webappdemo"
+    ],
+  "ignorePaths": [
+    ".git/**"
+  ]
+}
